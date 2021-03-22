@@ -21,18 +21,23 @@ class Product(models.Model):
         auto_now=True
     )
 
+    def __str__(self):
+        return f'{self.id}, {self.name}'
+
 
 class OrderPositions(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product,
+                                related_name='orders',
+                                on_delete=models.CASCADE)
     order = models.ForeignKey('Order',
                               related_name='positions',
                               on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(default=1)
 
 
 class ProductReview(models.Model):
-    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE, )
     text = models.TextField(blank=True, default='')
     rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     created_at = models.DateTimeField(
@@ -43,11 +48,12 @@ class ProductReview(models.Model):
     )
 
     class Meta:
-        unique_together = ['user_id', 'product_id']
+
+        unique_together = ['user', 'product']
 
 
 class Order(models.Model):
-    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     products = models.ManyToManyField(Product, through=OrderPositions)
     status = models.TextField(
         choices=OrderStatusChoices.choices,
