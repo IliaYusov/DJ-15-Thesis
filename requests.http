@@ -1,0 +1,106 @@
+@admin_token = 02de9d7a3f811d2caf8688e1b7efc22717f0aaf3
+@user_token = 33833c5147b712a51ce3b23d64a6037a07d952a6
+
+###
+
+# получение продуктов
+GET http://127.0.0.1:8000/api/v1/products/
+Content-Type: application/json
+
+###
+
+# создание продуктов
+POST http://127.0.0.1:8000/api/v1/products/
+Content-Type: application/json
+Authorization: Token {{admin_token}}
+
+{
+  "description": "Шикарный",
+  "price": 158.56
+}
+
+###
+
+# получение отзывов
+GET http://127.0.0.1:8000/api/v1/product-reviews/
+Content-Type: application/json
+
+###
+
+# создание отзыва
+POST http://127.0.0.1:8000/api/v1/product-reviews/
+Content-Type: application/json
+Authorization: Token {{admin_token}}
+
+{
+  "product_id": 45,
+  "text": "excellent",
+  "rating": 1
+}
+
+###
+
+# получение заказов
+GET http://127.0.0.1:8000/api/v1/orders/
+Content-Type: application/json
+Authorization: Token {{admin_token}}
+
+###
+
+# создание заказа
+POST http://127.0.0.1:8000/api/v1/orders/
+Content-Type: application/json
+Authorization: Token {{user_token}}
+
+{
+  "products": [
+    {
+      "product_id": 5,
+      "quantity": 1
+    },
+        {
+      "product_id": 6,
+      "quantity": 1
+    }
+    ]
+}
+
+###
+
+# изменение заказа
+PATCH http://127.0.0.1:8000/api/v1/orders/66/
+Content-Type: application/json
+Authorization: Token {{user_token}}
+
+{
+  "status": "DONE"
+}
+
+###
+
+# удаление заказа
+DELETE  http://127.0.0.1:8000/api/v1/orders/66/
+Content-Type: application/json
+Authorization: Token {{user_token}}
+
+###
+
+# получение подборок
+GET http://127.0.0.1:8000/api/v1/product-collections/
+Content-Type: application/json
+
+###
+
+# создание подборки
+POST http://127.0.0.1:8000/api/v1/product-collections/
+Content-Type: application/json
+Authorization: Token {{admin_token}}
+
+{
+  "name": "Суперподборка",
+  "text": "Много всего",
+  "products": [
+      {"product_id":12},
+      {"product_id":14}
+    ]
+}
