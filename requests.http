@@ -4,7 +4,7 @@
 ###
 
 # получение продуктов
-GET http://127.0.0.1:8000/api/v1/products/
+GET http://127.0.0.1:8000/api/v1/products/?price__lte=200
 Content-Type: application/json
 
 ###
@@ -15,8 +15,9 @@ Content-Type: application/json
 Authorization: Token {{admin_token}}
 
 {
-  "description": "Шикарный",
-  "price": 158.56
+  "name": "Iphone",
+  "description": "XS",
+  "price": 99999.99
 }
 
 ###
@@ -50,17 +51,17 @@ Authorization: Token {{admin_token}}
 # создание заказа
 POST http://127.0.0.1:8000/api/v1/orders/
 Content-Type: application/json
-Authorization: Token {{user_token}}
+Authorization: Token {{admin_token}}
 
 {
   "products": [
     {
-      "product_id": 5,
-      "quantity": 1
+      "product_id": 3,
+      "quantity": 10
     },
         {
-      "product_id": 6,
-      "quantity": 1
+      "product_id": 1,
+      "quantity": 13
     }
     ]
 }
@@ -68,9 +69,9 @@ Authorization: Token {{user_token}}
 ###
 
 # изменение заказа
-PATCH http://127.0.0.1:8000/api/v1/orders/66/
+PATCH http://127.0.0.1:8000/api/v1/orders/5/
 Content-Type: application/json
-Authorization: Token {{user_token}}
+Authorization: Token {{admin_token}}
 
 {
   "status": "DONE"

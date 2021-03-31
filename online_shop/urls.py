@@ -15,8 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from orders.views import OrdersViewSet
+from products.views import ProductsViewSet, ProductReviewsViewSet, ProductCollectionViewSet
 from rest_framework.routers import DefaultRouter
-from api_app.views import ProductsViewSet, ProductReviewsViewSet, OrdersViewSet, ProductCollectionViewSet
 
 router = DefaultRouter()
 router.register("products", ProductsViewSet, basename="products")

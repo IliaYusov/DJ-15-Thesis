@@ -1,7 +1,6 @@
+from products.models import Product, ProductReview, ProductCollection
 from rest_framework import serializers
-from api_app.models import Product, ProductReview, Order, OrderPositions, ProductCollection
-from django.contrib.auth.models import User
-from rest_framework.fields import DecimalField
+from users.serializers import UserSerializer
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -15,14 +14,6 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ('id', 'name', 'description', 'price', 'created_at', 'updated_at')
-
-
-class UserSerializer(serializers.ModelSerializer):
-    """Serializer для пользователя."""
-
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'first_name', 'last_name',)
 
 
 class ProductReviewSerializer(serializers.ModelSerializer):
@@ -49,8 +40,12 @@ class ProductReviewSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Wrong product_id')
 
         user_id = self.context['request'].user.id  # Проверяем что отзыв на один продукт только один
-        if ProductReview.objects.filter(user=user_id).filter(id=product_id):
-            raise serializers.ValidationError('Maximum one review per user per product')
+        if ProductReview.objects.filter(user=user_id).filter(product=product_id):
+            if self.context['request'].stream.method == 'POST':
+                raise serializers.ValidationError('Maximum one review per user per product')
+            elif self.context['request'].stream.method in ['PUT', 'PATCH']:
+                if product_id != self.instance.product_id:
+                    raise serializers.ValidationError("You already reviewed this product")
         return data
 
     def create(self, validated_data):
@@ -58,69 +53,6 @@ class ProductReviewSerializer(serializers.ModelSerializer):
         validated_data['user'] = self.context['request'].user
         validated_data['product'] = Product.objects.get(id=self.context['request'].data['product_id'])
         return super().create(validated_data)
-
-
-class OrderPositionsSerializer(serializers.Serializer):
-
-    product_id = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.all(),
-        required=True,
-    )
-    quantity = serializers.IntegerField(min_value=1, default=1)
-
-
-class OrderSerializer(serializers.ModelSerializer):
-
-    products = OrderPositionsSerializer(
-        many=True,
-        source="positions",
-    )
-
-    user = UserSerializer(
-        read_only=True,
-    )
-
-    total_amount = DecimalField(max_digits=10, decimal_places=2, read_only=True)
-
-    class Meta:
-        model = Order
-        fields = ('id', 'user', 'products', 'status', 'total_amount', 'created_at', 'updated_at')
-
-    def create(self, validated_data):
-
-        validated_data['user'] = self.context['request'].user  # Проставляем значения поля user по-умолчанию
-        positions_data = validated_data.pop('positions')
-
-        total_amount = 0  # Считаем и добавляем в validated_data total_amount
-        if positions_data:
-            for position in positions_data:
-                total_amount += position['product_id'].price * position['quantity']
-        validated_data['total_amount'] = total_amount
-
-        order = super().create(validated_data)
-
-        if positions_data:  # Создаем поля в промежуточной таблице
-            to_save = []
-            for position in positions_data:
-                to_save.append(OrderPositions(
-                    product=position['product_id'],
-                    quantity=position['quantity'],
-                    order_id=order.id,
-                ))
-            OrderPositions.objects.bulk_create(to_save)
-
-        return order
-
-    def validate(self, data):
-        """Проверяем, что статус могут менять только админы"""
-        if not self.context['request'].user.is_staff and 'status' in data:
-            raise serializers.ValidationError('Status is read-only for users')
-        product_ids = set()
-        for position in data['positions']:
-            product_ids.add(position['product_id'])
-        if len(product_ids) != len(data['positions']):
-            raise serializers.ValidationError('Products should be unique')
-        return data
 
 
 class ProductCollectionSerializer(serializers.ModelSerializer):
